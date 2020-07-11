@@ -41,3 +41,7 @@ const boundFn = btnClickHandler.bind(this);
 
 button.addEventListener("click", boundFn);
 button.removeEventListener("click", boundFn);
+
+// event 인자 전달
+// addEventListener는 이벤트를 인자로 전달함
+// handler에서 e를 받아 핸들링
