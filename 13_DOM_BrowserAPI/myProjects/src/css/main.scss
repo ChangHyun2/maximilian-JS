@@ -1,0 +1,438 @@
+$mq-base-font-size: 16px !default;
+$mq-responsive: true !default;
+
+$mq-breakpoints: (
+  mobile: 320px,
+  tablet: 740px,
+  desktop: 980px,
+  wide: 1300px,
+) !default;
+
+$mq-static-breakpoint: desktop !default;
+$mq-show-breakpoints: () !default;
+$mq-media-type: all !default;
+
+@function mq-px2em($px, $base-font-size: $mq-base-font-size) {
+  @if ($mq-base-font-size != 16px) {
+    @warn "Overriding $mq-base-font-size will break things, see https://github.com/sass-mq/sass-mq/issues/122.";
+  }
+  @if ($base-font-size != 16px) {
+    @warn "The $base-font-size argument will be removed in sass-mq v6.0.0, as overriding it breaks things, see https://github.com/sass-mq/sass-mq/issues/122.";
+  }
+  @if unitless($px) {
+    @warn "Assuming #{$px} to be in pixels, attempting to convert it into pixels.";
+    @return mq-px2em($px * 1px, $base-font-size);
+  } @else if unit($px) == em {
+    @return $px;
+  }
+  @return ($px / $base-font-size) * 1em;
+}
+
+@function mq-get-breakpoint-width($name, $breakpoints: $mq-breakpoints) {
+  @if map-has-key($breakpoints, $name) {
+    @return map-get($breakpoints, $name);
+  } @else {
+    @warn "Breakpoint #{$name} wasn't found in $breakpoints.";
+  }
+}
+
+/// @example scss
+///  .element {
+///    @include mq($from: mobile) {
+///      color: red;
+///    }
+///    @include mq($until: tablet) {
+///      color: blue;
+///    }
+///    @include mq(mobile, tablet) {
+///      color: green;
+///    }
+///    @include mq($from: tablet, $and: '(orientation: landscape)') {
+///      color: teal;
+///    }
+///    @include mq(950px) {
+///      color: hotpink;
+///    }
+///    @include mq(tablet, $media-type: screen) {
+///      color: hotpink;
+///    }
+///    // Advanced use:
+///    $my-breakpoints: (L: 900px, XL: 1200px);
+///    @include mq(L, $breakpoints: $my-breakpoints, $static-breakpoint: L) {
+///      color: hotpink;
+///    }
+///  }
+@mixin mq(
+  $from: false,
+  $until: false,
+  $and: false,
+  $media-type: $mq-media-type,
+  $breakpoints: $mq-breakpoints,
+  $responsive: $mq-responsive,
+  $static-breakpoint: $mq-static-breakpoint
+) {
+  $min-width: 0;
+  $max-width: 0;
+  $media-query: "";
+
+  // From: this breakpoint (inclusive)
+  @if $from {
+    @if type-of($from) == number {
+      $min-width: mq-px2em($from);
+    } @else {
+      $min-width: mq-px2em(mq-get-breakpoint-width($from, $breakpoints));
+    }
+  }
+
+  // Until: that breakpoint (exclusive)
+  @if $until {
+    @if type-of($until) == number {
+      $max-width: mq-px2em($until);
+    } @else {
+      $max-width: mq-px2em(mq-get-breakpoint-width($until, $breakpoints)) -
+        0.01em;
+    }
+  }
+
+  // Responsive support is enabled, output rules inside @media queries
+  @if $min-width != 0 {
+    $media-query: "#{$media-query} and (min-width: #{$min-width})";
+  }
+  @if $max-width != 0 {
+    $media-query: "#{$media-query} and (max-width: #{$max-width})";
+  }
+  @if $and {
+    $media-query: "#{$media-query} and #{$and}";
+  }
+
+  // Remove unnecessary media query prefix 'all and '
+  @if ($media-type == "all" and $media-query != "") {
+    $media-type: "";
+    $media-query: str-slice(unquote($media-query), 6);
+  }
+
+  @media #{$media-type + $media-query} {
+    @content;
+  }
+}
+
+@mixin mq-add-breakpoint($name, $width) {
+  $new-breakpoint: (
+    $name: $width,
+  );
+  $mq-breakpoints: map-merge($mq-breakpoints, $new-breakpoint) !global;
+  $mq-breakpoints: _mq-map-sort-by-value($mq-breakpoints) !global;
+}
+
+// # variable.scss
+$primary: #35bdb2;
+$orange: #f5981e;
+$grey: #a0a0a0;
+$active: #0857a1;
+$finished: #bbbdc0;
+
+$dark--grey: #7d7d88;
+$grey--light: #ededed;
+
+// # main.scsss
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Open Sans", sans-serif;
+}
+
+html {
+  font-size: 62.5%;
+  @include mq($from: mobile, $until: tablet) {
+    font-size: 55%;
+  }
+  @include mq($from: tablet, $until: desktop) {
+    font-size: 55%;
+  }
+}
+
+// # header.scss
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 5rem;
+
+  &-wrap {
+    padding: 1rem 4rem;
+    background: #f8f8f8;
+  }
+  &__title {
+    font-size: 2rem;
+  }
+  &__toolbar {
+    display: flex;
+
+    .btn {
+      font-size: 1.5rem;
+      color: #000;
+      border: 1px solid #f8f8f8;
+      // avoid text selected
+      -webkit-touch-callout: none; /* iOS Safari */
+      -webkit-user-select: none; /* Safari */
+      -khtml-user-select: none; /* Konqueror HTML */
+      -moz-user-select: none; /* Old versions of Firefox */
+      -ms-user-select: none; /* Internet Explorer/Edge */
+      user-select: none;
+
+      &:hover {
+        cursor: pointer;
+        border: 1px solid #000;
+      }
+    }
+    .checkbox {
+      margin: 1rem;
+      transform: scale(1.4);
+    }
+  }
+}
+
+// # projects.scss
+
+.projects {
+  &-wrap {
+    margin: 1.5rem 2rem;
+    display: flex;
+    justify-content: center;
+    padding: 1.5rem 0;
+    @include mq($from: mobile, $until: tablet) {
+      display: block;
+    }
+  }
+
+  border-radius: 1rem;
+  border: $grey--light solid 1px;
+  margin: 1rem;
+  padding: 2rem;
+  box-shadow: $grey--light 0px 0px 30px, $grey 0px 0px 2px;
+
+  &__title {
+    color: #fff;
+    padding: 1rem 3rem;
+    border-radius: 1rem;
+    margin: 1rem;
+    font-size: 2rem;
+    text-align: center;
+
+    &--active {
+      background: $active;
+    }
+    &--finished {
+      background: $finished;
+    }
+  }
+
+  &__list {
+    list-style: none;
+    padding: 0;
+  }
+}
+
+.project {
+  padding: 2rem;
+  margin: 1rem;
+  border-radius: 10px;
+  border: #fff solid 1px;
+  background: #fff;
+  box-shadow: #fff 0px 0px 30px, $grey 0px 0px 5px;
+  &--active:hover {
+    border: $active solid 2px;
+    padding: calc(2rem - 1px);
+    box-shadow: $grey--light 0px 0px 30px, $grey 0px 0px 2px;
+  }
+  &--finished {
+    background: lighten($grey--light, 5%);
+    &:hover {
+      background: #fff;
+    }
+  }
+  &__title {
+    font-size: 1.7rem;
+  }
+  &__content {
+    margin: 0.6rem 0;
+    font-size: 1.5rem;
+  }
+  &__btns {
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+
+// # footer.scss
+
+.btn {
+  padding: 0.2rem 1.3rem;
+  border-radius: 5px;
+  font-weight: 600;
+  color: white;
+  font-size: 1.3rem;
+
+  &:hover {
+    background: #fff;
+    color: #000;
+    border: 1px solid #000;
+    cursor: pointer;
+  }
+  &:focus {
+    outline: none;
+  }
+  &--info {
+    border: 1px solid darken($dark--grey, 2%);
+    background: darken($dark--grey, 2%);
+  }
+  &--done,
+  &--remove {
+    border: 1px solid darken($dark--grey, 30%);
+    background: darken($dark--grey, 30%);
+  }
+}
+
+.sticky {
+  position: sticky;
+  top: 0;
+  animation: topToBottom linear;
+  animation-duration: 2s;
+}
+
+@keyframes topToBottom {
+  from {
+    top: -18px;
+  }
+  to {
+    top: 0px;
+  }
+}
+
+// NAV-SLIDE COMPONENT
+.nav-slide {
+  position: fixed;
+  bottom: 1rem;
+  left: 2rem;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  list-style: none;
+  width: 0;
+  border-radius: 5rem;
+  background: #b9d614;
+  color: #000;
+  font-size: 2.5rem;
+
+  &__opener {
+    position: relative;
+    border: none;
+    color: #000;
+    padding: calc(0.5rem + 2px) 1.5rem;
+    &::after {
+      position: absolute;
+      font-size: 1.7rem;
+      top: -55%;
+      left: 0;
+    }
+    p {
+      position: absolute;
+      top: -50%;
+      left: 0;
+    }
+  }
+
+  &__closer {
+    display: none;
+    &.show {
+      display: inline-block;
+    }
+  }
+  & .btn {
+    border: none;
+    background: none;
+    padding: 0.5rem 1rem;
+    font-size: 2.5rem;
+  }
+  p {
+    white-space: nowrap;
+    font-size: 1.7rem;
+    font-weight: 600;
+  }
+
+  li {
+    display: none;
+    margin-right: 1rem;
+    &:last-of-type {
+      margin-right: 0;
+    }
+    &:hover {
+      color: #000;
+    }
+    &.show {
+      display: block;
+    }
+    .fa-paper-plane {
+      font-size: 2.2rem;
+    }
+    a {
+      color: inherit;
+    }
+  }
+}
+
+.hide {
+  display: none;
+}
+
+.invert {
+  animation: textFlick 2s;
+  color: #fff;
+  &--closer {
+    animation: textFlick--closer 3s;
+    // color: grey;
+  }
+}
+
+.toBlack {
+  color: #000;
+  transition: color 4s ease-in;
+}
+
+.widen {
+  transition: 1s;
+  width: 25.2rem;
+}
+.condense {
+  transition: width 1.5s;
+  width: 0rem;
+}
+// @keyframes toBlack {
+//   0% {
+//     color: #fff;
+//   }
+//   30% {
+//     color: #fff;
+//   }
+//   100% {
+//     color: #000;
+//   }
+// }
+
+@keyframes textFlick {
+  from {
+    color: rgba(0, 0, 0, 0);
+  }
+  to {
+    color: #fff;
+  }
+}
+@keyframes textFlick--closer {
+  from {
+    color: rgba(0, 0, 0, 0);
+  }
+  to {
+    // color: grey;
+  }
+}
