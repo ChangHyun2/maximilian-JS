@@ -58,3 +58,56 @@ form.addEventListener("submit", (e) => {
 // 상단에 위치한 아래의 코드로 인해 작동되지 않아 코멘트 처리함.
 // 이벤트 버블링과 관련된 내용일 듯
 // buttons.forEach((btn) => btn.addEventListener("click", btnClickHandler));
+document.querySelector("div").addEventListener("click", (e) => {
+  console.log("clicked div");
+  console.log(e.target);
+});
+
+document.querySelector("button").addEventListener("click", (e) => {
+  console.log("clicked button");
+  e.stopPropagation();
+  console.log(e);
+  console.log(e.target);
+});
+// clicked div와 clickedbutton 모두 출력됨
+// why? capturing phase에서 listener를 button까지 모두 등록하고
+// bubbling phase에서 click event에 대한 listener가 등록되어있는 모든 element에 대해 event 처리가 발생함.
+
+// const listItems = document.querySelectorAll("li");
+// listItems.forEach((li) => {
+//   li.addEventListener("click", (e) => {
+//     e.target.classList.toggle("highlight");
+//   });
+// });
+
+const ul = document.querySelector("ul");
+ul.addEventListener("click", (e) => {
+  e.target.classList.toggle("highlight");
+});
+// ul `eventListener`에 'click' 이벤트타입의 `eventHandler`를 등록해두면,
+// 하위 element인 li를 클릭할 경우, event.atarget인 li에서부터 bubbling이 발생할 때
+// ul의 eventListener에 등록된 eentHandler를 실행하게 됨.
+// 즉 상위에 eventListener를 등록하고, e.target을 이용해 하위의 event를 trigger한 element를 핸들링할 수 있음.
+// 이를 event delegation이라 함.
+
+ul.addEventListener("click", (e) => {
+  console.log(e.currentTarget);
+  console.log(e.target);
+  buttons.click();
+  // console.log(e.target.closest("selector")); // itself를 포함해 가장 가까운 element
+});
+
+// addEventListener와 무관하게 위 동작을 실행함.
+form.addEventListener("submit", (e) => e.preventDefault());
+//위 코드가 작성되었을지라도, preventDefault 없이 submit하게 됨.
+form.submit();
+
+//this
+
+// btn.addEventListener("click", () => {
+//   console.log(this); // this는 window가 됨. why? arrow function
+// });
+
+// btn.addEventListener("click", function () {
+//   console.log(this); // this는 btn DOM el이 됨.
+// });
