@@ -65,3 +65,28 @@ btn.addEventListener('click', (e)=>console.log(e));
 
 event 객체에는 여러 metadata를 property로 저장하고 있음.
 MDN 참고할 것.
+
+## event target 판별하기
+
+```js
+const btns = document.querySelectorAll('button');
+
+```
+
+## preventDefault
+
+```html
+<form>
+<button type='submit'></button>
+</form>
+```
+submit 버튼을 클릭할 경우 곧바로 data를 server에 request하고, 페이지를 새로고침하는데 
+preventDefault를 이용할 경우 이를 방지할 수 있음.
+입력값을 validate하고, sanitize하는 과정을 거치기 위해 사용함.
+
+```js
+const form = document.querySelector('form');
+form.addEventListener('submit',()=>{
+  console.log(event);
+} ) // form만 submit event를 가질 수 있어
+```
