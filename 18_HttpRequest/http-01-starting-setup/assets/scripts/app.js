@@ -4,7 +4,7 @@ const form = document.querySelector("#new-post form");
 const fetchButton = document.querySelector("#available-posts button");
 const posts = document.querySelector(".posts");
 
-const URL = "https://jsonplaceholder.typicode.com/posts";
+const URL = "https://jsonplaceholder.typicode.com/pos";
 // const xhr = new XMLHttpRequest();
 
 // xhr.open("GET",URL);
@@ -41,25 +41,43 @@ function sendHttpRequest(method, url, data) {
     xhr.responseType = "json";
 
     xhr.onload = function () {
-      res(xhr.response);
+      if (xhr.status >= 200 && xhr.status < 300) {
+        res(xhr.response);
+      } else {
+        rej(new Error("something went wrong"));
+      }
     };
 
     xhr.send(JSON.stringify(data));
+
+    xhr.onerror = function () {
+      rej(new Error("Failed to send request!"));
+      // 네트워크 에러를 의미
+      // url이 잘못된 경우에도 네트워크 처리는 됨.
+      // url 주소 입력에 대한 에러 처리는 serverside에서 onload로 satuscode를 통해 처리
+      console.log(xhr.response);
+      console.log(xhr.status);
+    };
   });
 
   return promise;
 }
 
 async function fetchPosts() {
-  const responseData = await sendHttpRequest("GET", URL);
-  posts.innerHTML = "";
-  console.log(responseData);
-  for (const post of responseData) {
-    const postEl = document.importNode(postTemplate.content, true);
-    postEl.querySelector("h2").textContent = post.title.toUpperCase();
-    postEl.querySelector("p").textContent = post.body;
-    postEl.querySelector("li").id = post.id;
-    listElement.append(postEl);
+  try {
+    const responseData = await sendHttpRequest("GET", URL);
+    posts.innerHTML = "";
+    console.log(responseData);
+    for (const post of responseData) {
+      const postEl = document.importNode(postTemplate.content, true);
+      postEl.querySelector("h2").textContent = post.title.toUpperCase();
+      postEl.querySelector("p").textContent = post.body;
+      postEl.querySelector("li").id = post.id;
+      listElement.append(postEl);
+    }
+  } catch (e) {
+    // try문을 전부 실행하지 않고 error가 발생하는 순간 catch문으로.
+    alert(e.message);
   }
 }
 
