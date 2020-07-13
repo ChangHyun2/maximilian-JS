@@ -100,32 +100,131 @@ someAsyncTask()
 ```
 
 ```js
+
+const getPosition = (opts) =>{
+    const promise = new Promise((res, rej)=>{
+        navigator.geolocation.getCurrentPosition(success =>{
+            resolve(success);
+        },opts);
+    })
+    return promise;
+}
+
 const setTimer = duration =>{
     const promise = new Promise((resolve, reject)=>{
         setTimeout(()=>{
-          resolve('done!');
+          resolve('Done!');
         }, duration);
     });
-    return promise;    
+    return promise;
 }
 
-```
-
-## 프로미스 에러 핸들링
-```js
-const myPromise = new Promise((resolve, reject) => {
-    setTimeout(() => {
-        resolve('Timer completed!');
-    }, 1000);
+function trackUserHandler(){
+    navigator.geolocation.getCurrentPosition(
+        posData =>{
+            setTimer(2000).then(data=>{
+                console.log(Data, posData);
+            });
+        }, 
+        error=>{
+            console.log(error);
+        }
+    )
+    setTimer(1000).then(()=>{
+        console.log('done...!');
+    })
+    console.log('getting position...');
 })
-    .then((text) => { throw new Error('Failed!') })
-    .catch(err => console.log(err))
-    .then(() => console.log('Does that execute?'));
 ```
-마지막 then문도 실행됨.
-error를 catch에서 처리해줬기 때문에 다음 then이 실행돼.
+
+## Promise state
 
 
-More on Promises: https://developers.google.com/web/fundamentals/primers/promises
+```js
+const vlaue = 20;
 
-More on async/ await: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function
+const promise = new Promise((res, rej)=>{
+    if(value<100){
+        res(value);
+    }else{
+        rej('too big');
+    }
+})
+promise()
+.then((data)=>console.log(data))
+.catch(err=>console.log(err));
+
+const promiseFunction = (value)  =>{
+    const promise = new Promise((res, rej)=>{
+        if(value<100){
+            res();
+        }else{
+            rej();
+        }
+    }
+    return promise
+};
+
+const promiseFunction = (value)=>{
+    return new Promise((res, rej)=>{
+        if(value<100){
+            res();
+        }else{
+            rej();
+        }
+    }
+}
+
+1. then & catch
+promiseFunction(30)
+.then(data=>console.log(data))
+.catch(err=>console.log(err));
+
+2. only then
+promiseFunction(30)
+.then(
+    data => console.log(Data),
+    err => console.log(err)
+);
+
+```
+
+1. PENDING
+    resolve, reject할 준비가 된 상황
+2. Resolved
+    resolve된 state, then문 실행
+3. rejected
+    reject된 state, catch문 실행
+
+.then()
+.catch()
+
+then과 catch문은 
+return값을 resolve하는 새로운 promise를 생성하고
+생성한 promise를 리턴함.
+만약 then catch문이 return하는 값이 promise라면 이 promise를턴함.
+
+
+When you have another then() block after a catch() or then() block, the promise re-enters PENDING mode
+(keep in mind: then() and catch() always return a new promise - 
+either not resolving to anything or resolving to what you return inside of then()). 
+Only if there are no more then() blocks left, it enters a new, final mode: SETTLED.
+
+Once SETTLED, you can use a special block - finally() - to do final cleanup work. 
+finally() is reached no matter if you resolved or rejected before.
+
+Here's an example:
+
+somePromiseCreatingCode()
+    .then(firstResult => {
+        return 'done with first promise';
+    })
+    .catch(err => {
+        // would handle any errors thrown before
+        // implicitly returns a new promise - just like then()
+    })
+    .finally(() => {
+        // the promise is settled now - finally() will NOT return a new promise!
+        // you can do final cleanup work here
+    });
+You don't have to add a finally() block (indeed we haven't in the lectures).
