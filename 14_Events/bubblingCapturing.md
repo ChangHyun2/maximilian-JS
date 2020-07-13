@@ -7,8 +7,7 @@
 버튼을 클릭할 경우,
 3가지 phase에 걸쳐 동작
 
-모든 element는 default로 모든 타입의 event listeners가 등록되어있음.
-`eventTarget.addEventListener(eventType, eventHandler)` 메소드는 `EventTarget`(element)에 등록되어있는 `EventListener`(event listeners)에, handler함수를 등록하는 메소드임.
+`eventTarget.addEventListener(eventType, eventHandler)` 메소드는 `EventTarget`(`Element`, `Document`, `Window`, `XMLHttpRequest`, ...)에 등록되어있는 `EventListener`(event listeners)에, handler함수를 등록하는 메소드임.
 
 default setting에서, capturing phase에서의 handler함수 실행은 발생하지 않음.
 즉, capturing phase에서 window로부터 event를 target까지 전달은 하지만, handler함수를 실행하지는 않음.
@@ -123,3 +122,21 @@ event.currentTarget : eventHandler를 실행한 listener가 붙어있는 타겟
 eventHandler를 등록한 element가 currentTarget이 됨.
 
 ## triggering DOM elements Programatically.
+
+
+## event 심화
+
+event attribute
+
+const el = document.querySelector('button');
+
+console.dir(el.);
+
+
+event는 js 코드를 실행해 trigger할 수도 있고, user로 하여금 HTMLElement.click()과 같은 DOM element 메소드를 통해 실행할 수도 있다.
+또는, event를 정의하고 EventTarget.dispatchEvent() 메소드를 통해 원하는 ElementTarget에 event를 전달할 수도 있다.
+Event 인터페이스에는 여러 종류의 다른 인터페이스들이 있다.
+
+EventTarget.addEventListener() 메소드를 통해 EventHandler를 HTML elements에 connect할 수 있고, 기존의 event handler 속성에 새롭게 connect하는 eventHandler를 추가해 새로운 인스턴스를 생성해 할당하며 기존의 evnet handler 속성은 제거하게된다.
+
+event handler 속성에 있는 handlers는 removeEventListener를 통해 제거될 수 있다.
