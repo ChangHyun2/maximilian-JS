@@ -34,40 +34,69 @@ plain tex, HTML, XML, csv , JSON
 */
 
 function sendHttpRequest(method, url, data) {
-  const promise = new Promise((res, rej) => {
-    const xhr = new XMLHttpRequest();
+  //   const promise = new Promise((res, rej) => {
+  // const xhr = new XMLHttpRequest();
+  //   xhr.setRequestHeader("Content-Type", "application/json"); //여러 개 추가 가능
+  // xhr.open(method, url);
+  // xhr.responseType = "json";
+  // xhr.onload = function () {
+  //   if (xhr.status >= 200 && xhr.status < 300) {
+  //     res(xhr.response);
+  //   } else {
+  // xhr.response // 여기에서 접근 가능. 근데 fetch는 접근이 어려워.
+  //     rej(new Error("something went wrong"));
+  //   }
+  // };
+  // xhr.send(JSON.stringify(data));
+  // xhr.onerror = function () {
+  //   rej(new Error("Failed to send request!"));
+  //   // 네트워크 에러를 의미
+  //   // url이 잘못된 경우에도 네트워크 처리는 됨.
+  //   // url 주소 입력에 대한 에러 처리는 serverside에서 onload로 satuscode를 통해 처리
+  //   console.log(xhr.response);
+  //   console.log(xhr.status);
+  // };
+  // });
+  // return promise;
 
-    xhr.open(method, url);
-    xhr.responseType = "json";
-
-    xhr.onload = function () {
-      if (xhr.status >= 200 && xhr.status < 300) {
-        res(xhr.response);
+  return fetch(url, {
+    method: method,
+    // body: JSON.stringify(data),
+    body: data,
+    // headers: {
+    //   "Content-Type": "application/json",
+    // },
+  })
+    .then((response) => {
+      // response에 대한 에러 처리 response을 json으로 바꾸는 과정을 2번 거칠 수 밖에 없어
+      if (response.status >= 200 && response.status < 300) {
+        return response.json();
       } else {
-        rej(new Error("something went wrong"));
+        return response.json().then((errData) => {
+          console.log(errData);
+          throw new Error("something went wrong - server-side");
+        });
+        // response.json().then((errData) => {
+        //   console.log(errData);
+        // });
+        // throw new Error("something went wrong - server-side");
+        // 이렇게 밖에서 스로잉할 경우, errData에 접근이 불가능해짐.
       }
-    };
-
-    xhr.send(JSON.stringify(data));
-
-    xhr.onerror = function () {
-      rej(new Error("Failed to send request!"));
-      // 네트워크 에러를 의미
-      // url이 잘못된 경우에도 네트워크 처리는 됨.
-      // url 주소 입력에 대한 에러 처리는 serverside에서 onload로 satuscode를 통해 처리
-      console.log(xhr.response);
-      console.log(xhr.status);
-    };
-  });
-
-  return promise;
+    })
+    .catch((e) => {
+      // 네트워크에 대한 에러 처리
+      console.log(e);
+      throw new Error("something went wrong");
+    });
+  // json.blob() , json.text()
 }
 
 async function fetchPosts() {
   try {
     const responseData = await sendHttpRequest("GET", URL);
-    posts.innerHTML = "";
     console.log(responseData);
+
+    posts.innerHTML = "";
     for (const post of responseData) {
       const postEl = document.importNode(postTemplate.content, true);
       postEl.querySelector("h2").textContent = post.title.toUpperCase();
@@ -89,7 +118,16 @@ async function createPost(title, content) {
     userId: userId,
   };
 
-  sendHttpRequest("POST", URL, post);
+  // form element를 인자로 전달하고
+  // default 항목은  tag에 name attribute(title, body)를 정해줌.
+  const fd = new FormData(form);
+  // fd.append("title", title);
+  // fd.append("body", content);
+  fd.append("userId", userId);
+
+  sendHttpRequest("POST", URL, fd);
+  // form 데이터를 사용할 경우 heade를 설정하고 json을 stringify할 필요가 없음.
+  // sendHttpRequest("POST", URL, post);
 }
 
 fetchButton.addEventListener("click", fetchPosts);
@@ -100,6 +138,7 @@ form.addEventListener("submit", (e) => {
   const enteredContent = e.currentTarget.querySelector("#content");
   createPost(enteredTitle, enteredContent);
 });
+
 posts.addEventListener("click", (e) => {
   if (e.target.tagName === "BUTTON") {
     const postId = e.target.closest("li").id;
